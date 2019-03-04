@@ -7,6 +7,8 @@ Android 在 API 18 使用 [BluetoothAdapter](https://developer.android.com/refer
 
 如果專案要使用藍芽於 API 21 以下將會有些麻煩，這個 tiny library 由此而生。
 
+
+
 *   使用簡易的判斷式即可於 running time 進行適配
 
         val bleScanner =
