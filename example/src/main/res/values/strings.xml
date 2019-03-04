@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name_ble">BleExample</string>
+    <string name="title_activity_main">@string/app_name_ble</string>
+</resources>
