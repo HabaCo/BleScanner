@@ -32,28 +32,30 @@ Android 在 API 18 使用 BluetoothAdapter 進行藍芽搜尋，而 API 21 使�
 *   此工具也開放 base listener 供覆寫，如果覺得上面很囉唆可以分別進行覆寫，但須確定 Android 版本，否則 ..
 API 18 的 onDeviceFound
 
-    bleScanner.asAPI18().onDeviceFound = { device: BleScannerAPI18.Device ->
-        ... your code
-    }
-API 21 的 onDeviceFound
-
-    bleScanner.asAPI21().onDeviceFound = { device: BleScannerAPI21.Device ->
-        val scanResult = device.scanResult
-        ... your code
-    }
-當然，也可以合併在初始宣告
-
-    val bleScanner =
-        if (Build.VERSION.SDK_INT < 21) {
-          BleScanner.BleScannerAPI18(this).also {
-            it.onDeviceFound = { device: BleScannerAPI18.Device ->
-              ... your code
+            bleScanner.asAPI18().onDeviceFound = { device: BleScannerAPI18.Device ->
+                ... your code
             }
-          }
-        } else {
-          BleScanner.BleScannerAPI21(this).also {
-            it.onDeviceFound = { device: BleScannerAPI21.Device ->
-              ... your code
+    
+*   API 21 的 onDeviceFound
+
+            bleScanner.asAPI21().onDeviceFound = { device: BleScannerAPI21.Device ->
+                val scanResult = device.scanResult
+                ... your code
             }
-          }
-        }
+    
+*   當然，也可以合併在初始宣告
+
+            val bleScanner =
+                if (Build.VERSION.SDK_INT < 21) {
+                  BleScanner.BleScannerAPI18(this).also {
+                    it.onDeviceFound = { device: BleScannerAPI18.Device ->
+                      ... your code
+                    }
+                  }
+                } else {
+                  BleScanner.BleScannerAPI21(this).also {
+                    it.onDeviceFound = { device: BleScannerAPI21.Device ->
+                      ... your code
+                    }
+                  }
+                }
