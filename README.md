@@ -1,5 +1,6 @@
 # BleScanner
 適用 API21 和 API18 的簡易藍芽掃描工具類.
+
 A simple bluetooth scanner tool compatible with API21 and API18.
 
 
