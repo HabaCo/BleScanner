@@ -1,9 +1,8 @@
 # BleScanner
 適用 API21 和 API18 的簡易藍芽掃描工具類.
-
 A simple bluetooth scanner tool compatible with API21 and API18.
 
-
+* * *
 Android 在 API 18 使用 BluetoothAdapter 進行藍芽搜尋，而 API 21 使用 BluetoothAdapter 底下的 BluetoothLeScanner 進行藍芽搜尋
 如果專案要使用藍芽於 API 21 以下將會有些麻煩，這個 tiny library 由此而生。
 
