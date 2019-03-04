@@ -47,7 +47,7 @@ class BleExampleActivity : AppCompatActivity() {
         else BleScanner.BleScannerAPI18(this)
 
         // 裝置搜尋到的 callback
-        bleScanner.onDeviceFound = { device, rssi, scanRecord ->
+        bleScanner.onDeviceFoundDefault = { device, rssi, scanRecord ->
             val address = device.address
             val name = device.name
             Log.i(tag, "device: $address  name:$name  rssi: $rssi")

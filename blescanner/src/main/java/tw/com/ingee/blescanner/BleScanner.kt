@@ -46,9 +46,19 @@ sealed class BleScanner {
     open class Device
 
     /**
-     * 裝置搜尋 callback
+     * 裝置搜尋 callback for API 18 + API 21 (藍芽諮會限制以 API 18 為主)
      */
-    var onDeviceFound: (device: BluetoothDevice, rssi: Int, scanRecord: ByteArray?) -> Unit = {_, _, _ -> }
+    var onDeviceFoundDefault: (device: BluetoothDevice, rssi: Int, scanRecord: ByteArray?) -> Unit = {_, _, _ -> }
+
+    /**
+     * 裝置搜尋 callback for API 18
+     */
+    var onDeviceFoundAPI18: (device: BleScannerAPI18.Device) -> Unit = {_ -> }
+
+    /**
+     * 裝置搜尋 callback for API 21
+     */
+    var onDeviceFoundAPI21: (device: BleScannerAPI21.Device) -> Unit = { _ -> }
 
     /**
      * 是否開啟 debug 輸出
@@ -63,7 +73,7 @@ sealed class BleScanner {
     /**
      * 搜尋清單
      */
-    protected var devices: HashMap<String, Any> = HashMap()
+    var devices: HashMap<String, Any> = HashMap()
 
     /**
      * 開始搜尋
@@ -97,6 +107,10 @@ sealed class BleScanner {
         ActivityCompat.requestPermissions(requestActivity, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), requestCode)
     }
 
+    fun asAPI81() = this@BleScanner as BleScannerAPI18
+
+    fun asAPI21() = this@BleScanner as BleScannerAPI21
+
     /**
      * BleScannerAPI21 used for API 21+
      */
@@ -109,6 +123,15 @@ sealed class BleScanner {
         private var mLeScanner: BluetoothLeScanner? = null
         private var bleScanCallback: ScanCallback? = null
 
+        /**
+         * 裝置搜尋 callback for API 21
+         */
+        var onDeviceFound: (device: Device) -> Unit = { device ->
+            val scanResult = device.scanResult
+            onDeviceFoundDefault(scanResult.device, scanResult.rssi, scanResult.scanRecord?.bytes)
+            onDeviceFoundAPI21(device)
+        }
+
         init {
             mBluetoothAdapter = (context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter
             mLeScanner = mBluetoothAdapter?.bluetoothLeScanner
@@ -119,10 +142,10 @@ sealed class BleScanner {
                     super.onScanResult(callbackType, scanResult)
 
                     scanResult?.let { result ->
-                        val device = result.device
-                        devices[device.address] = Device(callbackType, scanResult)
+                        val device = Device(callbackType, result)
+                        devices[result.device.address] = device
 
-                        onDeviceFound(device, result.rssi, result.scanRecord?.bytes)
+                        onDeviceFound(device)
                     }
                 }
             }
@@ -222,12 +245,21 @@ sealed class BleScanner {
         private var mBluetoothAdapter: BluetoothAdapter? = null
         private var bleScanCallback: BluetoothAdapter.LeScanCallback? = null
 
+        /**
+         * 裝置搜尋 callback for API 18
+         */
+        var onDeviceFound: (device: Device) -> Unit = {device ->
+            onDeviceFoundDefault(device.device, device.rssi, device.scanRecord)
+            onDeviceFoundAPI18(device)
+        }
+
         init {
             mBluetoothAdapter = (context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter
 
-            bleScanCallback = BluetoothAdapter.LeScanCallback { device, rssi, scanRecord ->
-                devices[device.address] = Device(device, rssi, scanRecord)
-                onDeviceFound(device, rssi, scanRecord)
+            bleScanCallback = BluetoothAdapter.LeScanCallback { bleDevice, rssi, scanRecord ->
+                val device = Device(bleDevice, rssi, scanRecord)
+                devices[bleDevice.address] = device
+                onDeviceFound(device)
             }
         }
 
