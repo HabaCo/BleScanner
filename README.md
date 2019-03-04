@@ -5,8 +5,7 @@ A simple bluetooth scanner tool compatible with API21 and API18.
 * * *
 Android 在 API 18 使用 [BluetoothAdapter](https://developer.android.com/reference/android/bluetooth/BluetoothAdapter) 進行藍芽搜尋，而 API 21 使用 [BluetoothAdapter](https://developer.android.com/reference/android/bluetooth/BluetoothAdapter) 底下的 [BluetoothLeScanner](https://developer.android.com/reference/android/bluetooth/le/BluetoothLeScanner) 進行藍芽搜尋
 
-如果專案要使用藍芽於 API 21 以下將會有些麻煩，這個 tiny tool 由此而生。
-
+如果專案要同時支援藍芽 API 18 與 API 21 以上又希望盡量使用新的 API 將會有些麻煩，這個 tiny tool 由此而生。
 
 - - -
 *   使用簡易的判斷式即可於 running time 進行適配
