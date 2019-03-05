@@ -8,9 +8,9 @@ Android 在 API 18 使用 [BluetoothAdapter](https://developer.android.com/refer
 如果專案要同時支援藍芽 API 18 與 API 21 以上又希望盡量使用新的 API 將會有些麻煩，這個 tiny tool 由此而生。
 
 - - -
-*   使用簡易的判斷式即可於 running time 進行適配
+*   使用簡易的判斷式即可於 running time 進行適配，type 使用抽象父型別 BleScanner 進行一般操作
 
-        val bleScanner =
+        val bleScanner: BleScanner =
             if (Build.VERSION.SDK_INT >= 21) BleScanner.BleScannerAPI21(this)
             else BleScanner.BleScannerAPI18(this)
 
