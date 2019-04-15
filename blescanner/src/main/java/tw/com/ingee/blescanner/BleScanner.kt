@@ -46,7 +46,7 @@ sealed class BleScanner {
     open class Device
 
     /**
-     * 裝置搜尋 callback for API 18 + API 21 (藍芽諮會限制以 API 18 為主)
+     * 裝置搜尋 callback for API 18 + API 21 (藍芽裝置會限制以 API 18 為主)
      */
     var onDeviceFoundDefault: (device: BluetoothDevice, rssi: Int, scanRecord: ByteArray?) -> Unit = {_, _, _ -> }
 
