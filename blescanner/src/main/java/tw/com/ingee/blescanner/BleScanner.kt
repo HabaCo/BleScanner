@@ -107,7 +107,7 @@ sealed class BleScanner {
         ActivityCompat.requestPermissions(requestActivity, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), requestCode)
     }
 
-    fun asAPI81() = this@BleScanner as BleScannerAPI18
+    fun asAPI18() = this@BleScanner as BleScannerAPI18
 
     fun asAPI21() = this@BleScanner as BleScannerAPI21
 
