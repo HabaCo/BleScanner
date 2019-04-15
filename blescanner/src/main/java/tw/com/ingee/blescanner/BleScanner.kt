@@ -12,6 +12,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Build
+import android.support.annotation.RequiresPermission
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.util.Log
@@ -35,7 +36,7 @@ import java.util.*
  *
  * 使用 [BleScannerAPI21] 目標為 API 21 以上裝置，並且須對使用者要求定位權限，以使用 [ScanCallback] 得到更詳細的藍芽資訊
  */
-sealed class BleScanner {
+sealed class BleScanner(val context: Context) {
 
     protected val TAG = javaClass.simpleName
 
@@ -46,7 +47,7 @@ sealed class BleScanner {
     open class Device
 
     /**
-     * 裝置搜尋 callback for API 18 + API 21 (藍芽裝置會限制以 API 18 為主)
+     * 裝置搜尋 callback for API 18 + API 21 (藍芽會限制以 API 18 為主)
      */
     var onDeviceFoundDefault: (device: BluetoothDevice, rssi: Int, scanRecord: ByteArray?) -> Unit = {_, _, _ -> }
 
@@ -59,6 +60,11 @@ sealed class BleScanner {
      * 裝置搜尋 callback for API 21
      */
     var onDeviceFoundAPI21: (device: BleScannerAPI21.Device) -> Unit = { _ -> }
+
+    /**
+     * 權限要求 callback
+     */
+    var handleRequestPermissionCallback: (permissionGranted: Boolean) -> Unit = {}
 
     /**
      * 是否開啟 debug 輸出
@@ -103,8 +109,28 @@ sealed class BleScanner {
     @Suppress("UNCHECKED_CAST")
     fun <T: Device> allFoundDevices() : Iterable<T> = devices.values.map { device -> device as T }
 
-    fun requestLocationPermission(requestActivity: Activity, requestCode: Int = PermissionRequestCode){
+    fun requestLocationPermission(requestActivity: Activity, requestCode: Int = PermissionRequestCode, callback: (permissionGranted: Boolean)-> Unit = {}){
+        handleRequestPermissionCallback = callback
         ActivityCompat.requestPermissions(requestActivity, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), requestCode)
+    }
+
+    /**
+     * 是否為本程序要求的權限，若是則處理後呼叫 [handleRequestPermissionCallback]
+     */
+    fun handleRequestPermissionResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray): Boolean {
+        val handled =
+            requestCode == BleScanner.PermissionRequestCode
+                    && permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION)
+
+        if (handled){
+            val granted = grantResults.isNotEmpty()
+                    && permissions[0] == Manifest.permission.ACCESS_FINE_LOCATION
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED
+
+            handleRequestPermissionCallback(granted)
+        }
+
+        return handled
     }
 
     fun asAPI18() = this@BleScanner as BleScannerAPI18
@@ -112,10 +138,21 @@ sealed class BleScanner {
     fun asAPI21() = this@BleScanner as BleScannerAPI21
 
     /**
+     * BLeScan 需要定位權限才能使用 [ScanCallback]，只要對定位權限 Group 要求任一權限即可，例如
+     *
+     * [android.Manifest.permission.ACCESS_FINE_LOCATION] 或
+     * [android.Manifest.permission.ACCESS_COARSE_LOCATION]
+     *
+     * 這裡我們使用 [android.Manifest.permission.ACCESS_FINE_LOCATION]
+     */
+    protected fun requestedLocationPermission(): Boolean
+            = ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+
+    /**
      * BleScannerAPI21 used for API 21+
      */
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    class BleScannerAPI21(private val context: Context) : BleScanner(){
+    class BleScannerAPI21(context: Context) : BleScanner(context){
 
         data class Device(val callbackType: Int, val scanResult: ScanResult): BleScanner.Device()
 
@@ -154,7 +191,7 @@ sealed class BleScanner {
         /**
          *  @throws LocationPermissionNotGrantedException 因為 API 21 需要定位權限才能使用 [ScanCallback]，如果沒有提供定位權限將會丟出此例外
          */
-        @SuppressLint("MissingPermission")
+        @RequiresPermission(Manifest.permission.BLUETOOTH_ADMIN)
         @Throws(LocationPermissionNotGrantedException::class)
         override fun startScan() {
             if (!isLocationServiceEnabled() || !requestedLocationPermission()){
@@ -187,17 +224,6 @@ sealed class BleScanner {
         }
 
         /**
-         * API 21 需要定位權限才能使用 [ScanCallback]，只要對定位權限 Group 要求任一權限即可，例如
-         *
-         * [android.Manifest.permission.ACCESS_FINE_LOCATION] 或
-         * [android.Manifest.permission.ACCESS_COARSE_LOCATION]
-         *
-         * 這裡我們使用 [android.Manifest.permission.ACCESS_FINE_LOCATION]
-         */
-        private fun requestedLocationPermission(): Boolean
-                = ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-
-        /**
          * API 21 需要開啟任一種定位方式 (GPS or WIFI or Passive 等等)
          */
         private fun isLocationServiceEnabled(): Boolean {
@@ -205,14 +231,14 @@ sealed class BleScanner {
                 val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
                 locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) or
-                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) or
-                locationManager.isProviderEnabled(LocationManager.PASSIVE_PROVIDER)
+                        locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) or
+                        locationManager.isProviderEnabled(LocationManager.PASSIVE_PROVIDER)
             } else {
                 true
             }
         }
 
-        @SuppressLint("MissingPermission")
+        @RequiresPermission(Manifest.permission.BLUETOOTH_ADMIN)
         override fun stopScan() {
             if (scanning){
                 scanning = false
@@ -230,7 +256,7 @@ sealed class BleScanner {
      * BleScannerAPI18 used for API 18-21 compatible
      */
     @Suppress("DEPRECATION")
-    class BleScannerAPI18(context: Context) : BleScanner(){
+    class BleScannerAPI18(context: Context) : BleScanner(context){
 
         data class Device(val device: BluetoothDevice, val rssi: Int, val scanRecord: ByteArray?): BleScanner.Device() {
             override fun equals(other: Any?): Boolean {
@@ -263,9 +289,11 @@ sealed class BleScanner {
             }
         }
 
-        @SuppressLint("MissingPermission")
+        @RequiresPermission(Manifest.permission.BLUETOOTH_ADMIN)
         override fun startScan() {
-            if (!scanning){
+            if (!requestedLocationPermission()){
+                throw LocationPermissionNotGrantedException("at least one of location providers need to be enable so we can use ScanCallback")
+            } else if (!scanning){
                 scanning = true
 
                 mBluetoothAdapter?.startLeScan(bleScanCallback)
@@ -279,6 +307,7 @@ sealed class BleScanner {
         /**
          * 此 method 僅提供給 API21，將忽略所有參數，呼叫等同 [startScan]
          */
+        @RequiresPermission(Manifest.permission.BLUETOOTH_ADMIN)
         override fun startScan(filters: List<ScanFilter>, settings: ScanSettings) {
             startScan()
         }
