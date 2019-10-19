@@ -32,6 +32,7 @@ Android 在 API 18 使用 [BluetoothAdapter](https://developer.android.com/refer
 
 
 *   此工具也開放 base listener 供覆寫，如果覺得上面很囉唆可以分別進行覆寫，但須確定 Android 版本，否則 ..
+
 API 18 的 onDeviceFound
 
             bleScanner.asAPI18().onDeviceFound = { device: BleScannerAPI18.Device ->
