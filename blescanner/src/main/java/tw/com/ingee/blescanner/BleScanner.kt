@@ -12,10 +12,11 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Build
-import android.support.annotation.RequiresPermission
-import android.support.v4.app.ActivityCompat
-import android.support.v4.content.ContextCompat
+import android.provider.Settings
 import android.util.Log
+import androidx.annotation.RequiresPermission
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import tw.com.ingee.blescanner.BleScanner.BleScannerAPI18
 import tw.com.ingee.blescanner.BleScanner.BleScannerAPI21
 import java.util.*
@@ -38,7 +39,7 @@ import java.util.*
  */
 sealed class BleScanner(val context: Context) {
 
-    protected val TAG = javaClass.simpleName
+    protected val tag = javaClass.simpleName
 
     companion object {
         const val PermissionRequestCode = 1
@@ -55,12 +56,13 @@ sealed class BleScanner(val context: Context) {
     /**
      * 裝置搜尋 callback for API 18 + API 21 (藍芽會限制以 API 18 為主)
      */
-    var onDeviceFoundDefault: (device: BluetoothDevice, rssi: Int, scanRecord: ByteArray?) -> Unit = {_, _, _ -> }
+    var onDeviceFoundDefault: (device: BluetoothDevice, rssi: Int, scanRecord: ByteArray?) -> Unit =
+        { _, _, _ -> }
 
     /**
      * 裝置搜尋 callback for API 18
      */
-    var onDeviceFoundAPI18: (device: BleScannerAPI18.Device) -> Unit = {_ -> }
+    var onDeviceFoundAPI18: (device: BleScannerAPI18.Device) -> Unit = { _ -> }
 
     /**
      * 裝置搜尋 callback for API 21
@@ -80,7 +82,7 @@ sealed class BleScanner(val context: Context) {
     /**
      * 是否開啟 debug 輸出
      */
-    var debug = true
+    var debug = false
 
     /**
      * 搜尋中與否
@@ -118,22 +120,44 @@ sealed class BleScanner(val context: Context) {
      * 如果使用 [BleScannerAPI18], 型別使用 [BleScannerAPI18.Device] 轉換
      */
     @Suppress("UNCHECKED_CAST")
-    fun <T: Device> allFoundDevices() : Iterable<T> = devices.values.map { device -> device as T }
+    fun <T : Device> allFoundDevices(): Iterable<T> = devices.values.map { device -> device as T }
 
-    fun enableBluetooth(requestCode: Int = BluetoothEnableRequestCode, callback: (permissionGranted: Boolean)-> Unit = {}) {
+    /**
+     * enable debug output with tag what name is it's simple name of class
+     */
+    fun enableDebug() {
+        debug = true
+    }
+
+    fun enableBluetooth(
+        requestCode: Int = BluetoothEnableRequestCode,
+        callback: (permissionGranted: Boolean) -> Unit = {}
+    ) {
         handleBluetoothEnableCallback = callback
 
         val intent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-        if (context is Activity){
+        if (context is Activity) {
             context.startActivityForResult(intent, requestCode)
         } else {
             context.startActivity(intent)
         }
     }
 
-    fun requestLocationPermission(requestActivity: Activity, requestCode: Int = PermissionRequestCode, callback: (permissionGranted: Boolean)-> Unit = {}){
+    fun requestLocationPermission(
+        requestActivity: Activity,
+        requestCode: Int = PermissionRequestCode,
+        callback: (permissionGranted: Boolean) -> Unit = {}
+    ) {
         handleRequestPermissionCallback = callback
-        ActivityCompat.requestPermissions(requestActivity, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), requestCode)
+        ActivityCompat.requestPermissions(
+            requestActivity,
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+            requestCode
+        )
+    }
+
+    fun startLocationSettings(context: Context) {
+        context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
     }
 
     /**
@@ -143,7 +167,7 @@ sealed class BleScanner(val context: Context) {
         val handled =
             requestCode == BluetoothEnableRequestCode
 
-        if (handled){
+        if (handled) {
             handleBluetoothEnableCallback(resultCode == Activity.RESULT_OK)
         }
 
@@ -153,12 +177,16 @@ sealed class BleScanner(val context: Context) {
     /**
      * 是否為本程序要求的權限，若是則處理後呼叫 [handleRequestPermissionCallback]
      */
-    fun handleRequestPermissionResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray): Boolean {
+    fun handleRequestPermissionResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ): Boolean {
         val handled =
             requestCode == PermissionRequestCode
                     && permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION)
 
-        if (handled){
+        if (handled) {
             val granted = grantResults.isNotEmpty()
                     && permissions[0] == Manifest.permission.ACCESS_FINE_LOCATION
                     && grantResults[0] == PackageManager.PERMISSION_GRANTED
@@ -181,16 +209,18 @@ sealed class BleScanner(val context: Context) {
      *
      * 這裡我們使用 [android.Manifest.permission.ACCESS_FINE_LOCATION]
      */
-    protected fun requestedLocationPermission(): Boolean
-            = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+    protected fun requestedLocationPermission(): Boolean = ContextCompat.checkSelfPermission(
+        context,
+        Manifest.permission.ACCESS_FINE_LOCATION
+    ) == PackageManager.PERMISSION_GRANTED
 
     /**
      * BleScannerAPI21 used for API 21+
      */
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    class BleScannerAPI21(context: Context) : BleScanner(context){
+    class BleScannerAPI21(context: Context) : BleScanner(context) {
 
-        data class Device(val callbackType: Int, val scanResult: ScanResult): BleScanner.Device() {
+        data class Device(val callbackType: Int, val scanResult: ScanResult) : BleScanner.Device() {
             override fun equals(other: Any?): Boolean {
                 return other is Device && other.scanResult.device.address == scanResult.device.address
             }
@@ -216,13 +246,13 @@ sealed class BleScanner(val context: Context) {
         }
 
         init {
-            mBluetoothAdapter = (context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter
+            mBluetoothAdapter =
+                (context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter
             mLeScanner = mBluetoothAdapter?.bluetoothLeScanner
 
-            bleScanCallback = object: ScanCallback() {
+            bleScanCallback = object : ScanCallback() {
 
                 override fun onScanResult(callbackType: Int, scanResult: ScanResult?) {
-                    super.onScanResult(callbackType, scanResult)
 
                     scanResult?.let { result ->
                         val device = Device(callbackType, result)
@@ -245,15 +275,17 @@ sealed class BleScanner(val context: Context) {
             } else if (!mBluetoothAdapter!!.isEnabled) {
                 mBluetoothAdapter?.enable()
                 throw BluetoothNotEnabledException("Bluetooth is not enabled")
-            } else if (!isLocationServiceEnabled() || !requestedLocationPermission()){
+            } else if (!requestedLocationPermission()) {
                 throw LocationPermissionNotGrantedException("at least one of location providers need to be enable so we can use ScanCallback")
+            } else if (!isLocationServiceEnabled()) {
+                throw LocationDisabledException("above Android OS 6.0, we need to enable location service to scan device nearby")
             } else if (!scanning) {
                 scanning = true
 
                 mLeScanner?.startScan(bleScanCallback)
 
-                if (debug){
-                    Log.d(TAG, "startScan")
+                if (debug) {
+                    Log.d(tag, "startScan")
                 }
             }
         }
@@ -265,15 +297,17 @@ sealed class BleScanner(val context: Context) {
                 return
             } else if (!mBluetoothAdapter!!.isEnabled) {
                 throw BluetoothNotEnabledException("Bluetooth is not enabled")
-            } else if (!isLocationServiceEnabled() || !requestedLocationPermission()){
+            } else if (!requestedLocationPermission()) {
                 throw LocationPermissionNotGrantedException("at least one of location providers need to be enable so we can use ScanCallback")
+            } else if (!isLocationServiceEnabled()) {
+                throw LocationDisabledException("above Android OS 6.0, we need to enable location service to scan device nearby")
             } else if (!scanning) {
                 scanning = true
 
                 mLeScanner?.startScan(filters, settings, bleScanCallback)
 
-                if (debug){
-                    Log.d(TAG, "startScan")
+                if (debug) {
+                    Log.d(tag, "startScan")
                 }
             }
         }
@@ -283,11 +317,16 @@ sealed class BleScanner(val context: Context) {
          */
         private fun isLocationServiceEnabled(): Boolean {
             return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
-                locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) or
-                        locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) or
-                        locationManager.isProviderEnabled(LocationManager.PASSIVE_PROVIDER)
+                val locationManager =
+                    context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    return locationManager.isLocationEnabled
+                } else {
+                    locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) or
+                            locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+                }
             } else {
                 true
             }
@@ -295,16 +334,16 @@ sealed class BleScanner(val context: Context) {
 
         @RequiresPermission(Manifest.permission.BLUETOOTH_ADMIN)
         override fun stopScan() {
-            if (scanning){
+            if (scanning) {
                 scanning = false
 
                 try {
                     mLeScanner?.stopScan(bleScanCallback)
 
                     if (debug) {
-                        Log.d(TAG, "stopScan")
+                        Log.d(tag, "stopScan")
                     }
-                } catch (e: IllegalStateException){
+                } catch (e: IllegalStateException) {
                     // BT Adapter is not turned ON or it just turn off before shutdown the scanner
                 }
             }
@@ -315,9 +354,10 @@ sealed class BleScanner(val context: Context) {
      * BleScannerAPI18 used for API 18-21 compatible
      */
     @Suppress("DEPRECATION")
-    class BleScannerAPI18(context: Context) : BleScanner(context){
+    class BleScannerAPI18(context: Context) : BleScanner(context) {
 
-        data class Device(val device: BluetoothDevice, val rssi: Int, val scanRecord: ByteArray?): BleScanner.Device() {
+        data class Device(val device: BluetoothDevice, val rssi: Int, val scanRecord: ByteArray?) :
+            BleScanner.Device() {
             override fun equals(other: Any?): Boolean {
                 return other is Device && other.device.address == device.address
             }
@@ -333,7 +373,7 @@ sealed class BleScanner(val context: Context) {
         /**
          * 裝置搜尋 callback for API 18
          */
-        var onDeviceFound: (device: Device) -> Unit = {device ->
+        var onDeviceFound: (device: Device) -> Unit = { device ->
             device.lastScannedMillis = System.currentTimeMillis()
 
             onDeviceFoundDefault(device.device, device.rssi, device.scanRecord)
@@ -341,7 +381,8 @@ sealed class BleScanner(val context: Context) {
         }
 
         init {
-            mBluetoothAdapter = (context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter
+            mBluetoothAdapter =
+                (context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter
 
             bleScanCallback = BluetoothAdapter.LeScanCallback { bleDevice, rssi, scanRecord ->
                 val device = Device(bleDevice, rssi, scanRecord)
@@ -357,13 +398,13 @@ sealed class BleScanner(val context: Context) {
                 return
             } else if (!mBluetoothAdapter!!.isEnabled) {
                 throw BluetoothNotEnabledException("Bluetooth is not enabled")
-            } else if (!scanning){
+            } else if (!scanning) {
                 scanning = true
 
                 mBluetoothAdapter?.startLeScan(bleScanCallback)
 
-                if (debug){
-                    Log.d(TAG, "startScan")
+                if (debug) {
+                    Log.d(tag, "startScan")
                 }
             }
         }
@@ -379,23 +420,25 @@ sealed class BleScanner(val context: Context) {
 
         @RequiresPermission(Manifest.permission.BLUETOOTH_ADMIN)
         override fun stopScan() {
-            if (scanning){
+            if (scanning) {
                 scanning = false
 
                 try {
                     mBluetoothAdapter?.stopLeScan(bleScanCallback)
 
                     if (debug) {
-                        Log.d(TAG, "stopScan")
+                        Log.d(tag, "stopScan")
                     }
-                } catch (e: IllegalStateException){
+                } catch (e: IllegalStateException) {
                     // BT Adapter is not turned ON or it just turn off before shutdown the scanner
                 }
             }
         }
     }
 
-    class LocationPermissionNotGrantedException(message: String): Exception(message)
+    class LocationDisabledException(message: String) : Exception(message)
 
-    class BluetoothNotEnabledException(message: String): Exception(message)
+    class LocationPermissionNotGrantedException(message: String) : Exception(message)
+
+    class BluetoothNotEnabledException(message: String) : Exception(message)
 }
