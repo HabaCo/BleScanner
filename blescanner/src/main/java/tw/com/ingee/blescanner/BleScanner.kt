@@ -46,6 +46,8 @@ sealed class BleScanner(val context: Context) {
         const val BluetoothEnableRequestCode = 87
     }
 
+    protected var mBluetoothAdapter: BluetoothAdapter? = null
+
     open class Device {
         var lastScannedMillis = 0L
 
@@ -93,6 +95,8 @@ sealed class BleScanner(val context: Context) {
      * 搜尋清單
      */
     var devices: HashMap<String, Any> = HashMap()
+
+    open fun reset() { }
 
     /**
      * 開始搜尋
@@ -171,6 +175,8 @@ sealed class BleScanner(val context: Context) {
             handleBluetoothEnableCallback(resultCode == Activity.RESULT_OK)
         }
 
+        reset()
+
         return handled
     }
 
@@ -193,6 +199,8 @@ sealed class BleScanner(val context: Context) {
 
             handleRequestPermissionCallback(granted)
         }
+
+        reset()
 
         return handled
     }
@@ -230,7 +238,6 @@ sealed class BleScanner(val context: Context) {
             }
         }
 
-        private var mBluetoothAdapter: BluetoothAdapter? = null
         private var mLeScanner: BluetoothLeScanner? = null
         private var bleScanCallback: ScanCallback? = null
 
@@ -264,6 +271,12 @@ sealed class BleScanner(val context: Context) {
             }
         }
 
+        override fun reset() {
+            mBluetoothAdapter =
+                (context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter
+            mLeScanner = mBluetoothAdapter?.bluetoothLeScanner
+        }
+
         /**
          *  @throws LocationPermissionNotGrantedException 因為 API 21 需要定位權限才能使用 [ScanCallback]，如果沒有提供定位權限將會丟出此例外
          */
@@ -283,10 +296,6 @@ sealed class BleScanner(val context: Context) {
                 scanning = true
 
                 mLeScanner?.startScan(bleScanCallback)
-
-                if (debug) {
-                    Log.d(tag, "startScan")
-                }
             }
         }
 
@@ -305,10 +314,6 @@ sealed class BleScanner(val context: Context) {
                 scanning = true
 
                 mLeScanner?.startScan(filters, settings, bleScanCallback)
-
-                if (debug) {
-                    Log.d(tag, "startScan")
-                }
             }
         }
 
@@ -339,10 +344,6 @@ sealed class BleScanner(val context: Context) {
 
                 try {
                     mLeScanner?.stopScan(bleScanCallback)
-
-                    if (debug) {
-                        Log.d(tag, "stopScan")
-                    }
                 } catch (e: IllegalStateException) {
                     // BT Adapter is not turned ON or it just turn off before shutdown the scanner
                 }
@@ -367,7 +368,6 @@ sealed class BleScanner(val context: Context) {
             }
         }
 
-        private var mBluetoothAdapter: BluetoothAdapter? = null
         private var bleScanCallback: BluetoothAdapter.LeScanCallback? = null
 
         /**
@@ -402,10 +402,6 @@ sealed class BleScanner(val context: Context) {
                 scanning = true
 
                 mBluetoothAdapter?.startLeScan(bleScanCallback)
-
-                if (debug) {
-                    Log.d(tag, "startScan")
-                }
             }
         }
 
@@ -425,10 +421,6 @@ sealed class BleScanner(val context: Context) {
 
                 try {
                     mBluetoothAdapter?.stopLeScan(bleScanCallback)
-
-                    if (debug) {
-                        Log.d(tag, "stopScan")
-                    }
                 } catch (e: IllegalStateException) {
                     // BT Adapter is not turned ON or it just turn off before shutdown the scanner
                 }
