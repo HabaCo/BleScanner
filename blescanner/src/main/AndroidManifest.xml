@@ -1,2 +1,1 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="tw.com.ingee.blescanner"/>
+<manifest package="com.github.habaco.blescanner" />

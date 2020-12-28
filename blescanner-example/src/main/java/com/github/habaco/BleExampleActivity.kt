@@ -1,4 +1,4 @@
-package tw.com.ingee
+package com.github.habaco
 
 import android.annotation.SuppressLint
 import android.os.Build
@@ -12,7 +12,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import tw.com.ingee.blescanner.BleScanner
+import com.github.habaco.blescanner.BleScanner
 import java.util.*
 
 class BleExampleActivity : AppCompatActivity() {

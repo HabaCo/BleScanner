@@ -1,4 +1,4 @@
-package tw.com.ingee.blescanner
+package com.github.habaco.blescanner
 
 import android.Manifest
 import android.annotation.TargetApi
@@ -16,8 +16,8 @@ import android.provider.Settings
 import androidx.annotation.RequiresPermission
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import tw.com.ingee.blescanner.BleScanner.BleScannerAPI18
-import tw.com.ingee.blescanner.BleScanner.BleScannerAPI21
+import com.github.habaco.blescanner.BleScanner.BleScannerAPI18
+import com.github.habaco.blescanner.BleScanner.BleScannerAPI21
 import java.util.*
 
 /**
