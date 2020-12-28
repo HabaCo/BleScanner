@@ -2,6 +2,22 @@
 適用 API21 和 API18 的簡易藍芽掃描工具類.
 
 A simple bluetooth scanner tool compatible with API21 and API18.
+
+
+
+Gradle
+    
+    allprojects {
+        repositories {
+                ...
+                maven { url 'https://jitpack.io' }
+        }
+    }
+    
+    dependencies {
+       implementation 'com.github.HabaCo:BleScanner:1.0.0'
+    }
+    
 * * *
 Android 在 API 18 使用 [BluetoothAdapter](https://developer.android.com/reference/android/bluetooth/BluetoothAdapter) 進行藍芽搜尋，而 API 21 使用 [BluetoothAdapter](https://developer.android.com/reference/android/bluetooth/BluetoothAdapter) 底下的 [BluetoothLeScanner](https://developer.android.com/reference/android/bluetooth/le/BluetoothLeScanner) 進行藍芽搜尋
 
