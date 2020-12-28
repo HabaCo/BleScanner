@@ -1,2 +1,2 @@
 include ':blescanner-example', ':blescanner'
-rootProject.name = "blescanner"
+rootProject.name = "Utils"
