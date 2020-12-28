@@ -9,13 +9,13 @@ Gradle
     
     allprojects {
         repositories {
-                ...
-                maven { url 'https://jitpack.io' }
+            ...
+            maven { url 'https://jitpack.io' }
         }
     }
     
     dependencies {
-       implementation 'com.github.HabaCo:BleScanner:1.0.0'
+        implementation 'com.github.HabaCo:BleScanner:1.0.0'
     }
     
 * * *
