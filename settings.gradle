@@ -1,2 +1,3 @@
-include ':blescanner-example', ':blescanner-lib'
+include ':example'
+include ':lib'
 rootProject.name = "BleScanner"
