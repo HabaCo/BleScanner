@@ -1,19 +1,19 @@
 package tw.com.ingee
 
+import android.annotation.SuppressLint
 import android.os.Build
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import tw.com.ingee.blescanner.BleScanner
 import java.util.*
-import kotlin.Comparator
 
 class BleExampleActivity : AppCompatActivity() {
 
@@ -26,9 +26,7 @@ class BleExampleActivity : AppCompatActivity() {
 
     private lateinit var bleScanner: BleScanner
 
-    private val devices = TreeMap<String, String>(
-        Comparator<String> { o1, o2 -> o1.compareTo(o2) }
-    )
+    private val devices = TreeMap<String, String> { o1, o2 -> o1.compareTo(o2) }
 
     private var scanning = false
 
@@ -81,6 +79,7 @@ class BleExampleActivity : AppCompatActivity() {
 
     }
 
+    @SuppressLint("SetTextI18n")
     private fun toggleScan() {
         try {
             if (!scanning) {

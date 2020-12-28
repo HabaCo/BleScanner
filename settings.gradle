@@ -1,1 +1,1 @@
-include ':example', ':blescanner'
+include ':blescanner-example', ':blescanner'

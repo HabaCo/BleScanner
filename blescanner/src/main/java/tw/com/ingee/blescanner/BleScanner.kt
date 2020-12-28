@@ -13,7 +13,6 @@ import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Build
 import android.provider.Settings
-import android.util.Log
 import androidx.annotation.RequiresPermission
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -23,10 +22,7 @@ import java.util.*
 
 /**
  * Created by Haba on 2019/2/27.
- * © Ingee.com.tw All Rights Reserved
- */
-
-/**
+ *
  * 此 project 不預先加入 permission 以方便使用管理
  *
  * 建議加入以下權限以確保使用藍芽
@@ -47,6 +43,8 @@ sealed class BleScanner(val context: Context) {
     }
 
     protected var mBluetoothAdapter: BluetoothAdapter? = null
+
+    protected var logger: Logger? = null
 
     open class Device {
         var lastScannedMillis = 0L
@@ -129,8 +127,8 @@ sealed class BleScanner(val context: Context) {
     /**
      * enable debug output with tag what name is it's simple name of class
      */
-    fun enableDebug() {
-        debug = true
+    fun injectLogger(logger: Logger) {
+        this.logger = logger
     }
 
     fun enableBluetooth(
@@ -296,6 +294,8 @@ sealed class BleScanner(val context: Context) {
                 scanning = true
 
                 mLeScanner?.startScan(bleScanCallback)
+
+                logger?.message("startScan")
             }
         }
 
@@ -314,6 +314,8 @@ sealed class BleScanner(val context: Context) {
                 scanning = true
 
                 mLeScanner?.startScan(filters, settings, bleScanCallback)
+
+                logger?.message("startScan")
             }
         }
 
@@ -344,6 +346,8 @@ sealed class BleScanner(val context: Context) {
 
                 try {
                     mLeScanner?.stopScan(bleScanCallback)
+
+                    logger?.message("stopScan")
                 } catch (e: IllegalStateException) {
                     // BT Adapter is not turned ON or it just turn off before shutdown the scanner
                 }
@@ -402,6 +406,8 @@ sealed class BleScanner(val context: Context) {
                 scanning = true
 
                 mBluetoothAdapter?.startLeScan(bleScanCallback)
+
+                logger?.message("startScan")
             }
         }
 
@@ -421,6 +427,8 @@ sealed class BleScanner(val context: Context) {
 
                 try {
                     mBluetoothAdapter?.stopLeScan(bleScanCallback)
+
+                    logger?.message("stopScan")
                 } catch (e: IllegalStateException) {
                     // BT Adapter is not turned ON or it just turn off before shutdown the scanner
                 }
@@ -433,4 +441,8 @@ sealed class BleScanner(val context: Context) {
     class LocationPermissionNotGrantedException(message: String) : Exception(message)
 
     class BluetoothNotEnabledException(message: String) : Exception(message)
+
+    interface Logger {
+        fun message(message: Any)
+    }
 }
