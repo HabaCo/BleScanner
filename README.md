@@ -1,5 +1,7 @@
 # BleScanner
 
+[![](https://jitpack.io/v/HabaCo/BleScanner.svg)](https://jitpack.io/#HabaCo/BleScanner)
+
 A simple bluetooth scanner tool compatible with API21 and API18.
 > 適用 API21 和 API18 的簡易藍芽掃描工具類.
 
